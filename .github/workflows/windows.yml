@@ -1,0 +1,23 @@
+name: Windows RF smoke
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    env:
+      PYTHONUTF8: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYVISTA_OFF_SCREEN: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.11"
+      - run: python -m pip install uv
+      - run: ./setup.ps1
+      - name: Solve synthetic guide at one frequency
+        run: ./.venv/Scripts/python.exe examples/emerge-wr340-waveguide/scripts/solve_waveguide.py --case ci-smoke --mesh-mm 12 --frequencies-ghz 2.45
+      - name: Check analytic phase and power balance
+        run: ./.venv/Scripts/python.exe tools/check_waveguide.py examples/emerge-wr340-waveguide/results/ci-smoke/summary.json
